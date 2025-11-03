@@ -40,7 +40,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   const saveEvent = async (eventData: Event | EventForm) => {
     try {
       let response;
-      if (editing) {
+      if (editing || ('id' in eventData && eventData.id != null)) {
         const editingEvent = {
           ...eventData,
           // ! TEST CASE

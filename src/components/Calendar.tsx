@@ -1,3 +1,4 @@
+import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
 import { ChevronLeft, ChevronRight, Notifications, Repeat } from '@mui/icons-material';
 import {
   Box,
@@ -14,6 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import React from 'react';
 
 import { Event, RepeatType } from '../types';
 import {
@@ -33,6 +35,7 @@ type CalendarProps = {
   navigate: (_direction: 'prev' | 'next') => void;
   filteredEvents: Event[];
   notifiedEvents: string[];
+  onEventDateChange: (_eventId: string, _newDate: string) => void;
 };
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -73,6 +76,91 @@ const getRepeatTypeLabel = (type: RepeatType): string => {
   }
 };
 
+// Draggable Event Component
+function DraggableEvent({
+  event,
+  isNotified,
+  isRepeating,
+}: {
+  event: Event;
+  isNotified: boolean;
+  isRepeating: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: event.id,
+    data: { event },
+  });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        opacity: isDragging ? 0.5 : 1,
+        cursor: 'grab',
+      }
+    : { cursor: 'grab' };
+
+  return (
+    <Box
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      sx={{
+        ...eventBoxStyles.common,
+        ...(isNotified ? eventBoxStyles.notified : eventBoxStyles.normal),
+        ...style,
+        '&:hover': {
+          opacity: 0.8,
+        },
+      }}
+    >
+      <Stack direction="row" spacing={1} alignItems="center">
+        {isNotified && <Notifications fontSize="small" />}
+        {isRepeating && (
+          <Tooltip
+            title={`${event.repeat.interval}${getRepeatTypeLabel(event.repeat.type)}마다 반복${
+              event.repeat.endDate ? ` (종료: ${event.repeat.endDate})` : ''
+            }`}
+          >
+            <Repeat fontSize="small" />
+          </Tooltip>
+        )}
+        <Typography variant="caption" noWrap sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>
+          {event.title}
+        </Typography>
+      </Stack>
+    </Box>
+  );
+}
+
+// Droppable Date Cell Component
+function DroppableCell({
+  date,
+  children,
+  sx,
+}: {
+  date: Date;
+  children: React.ReactNode;
+  sx?: object;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: date.toISOString(),
+    data: { date },
+  });
+
+  return (
+    <TableCell
+      ref={setNodeRef}
+      sx={{
+        ...sx,
+        backgroundColor: isOver ? '#e3f2fd' : 'transparent',
+        transition: 'background-color 0.2s',
+      }}
+    >
+      {children}
+    </TableCell>
+  );
+}
+
 export function Calendar({
   view,
   setView,
@@ -81,7 +169,27 @@ export function Calendar({
   navigate,
   filteredEvents,
   notifiedEvents,
+  onEventDateChange,
 }: CalendarProps) {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const eventId = active.id as string;
+    const draggedEvent = active.data.current?.event as Event;
+    const targetDate = over.data.current?.date as Date;
+
+    if (!draggedEvent || !targetDate) return;
+
+    // Format target date to match event date format (YYYY-MM-DD)
+    const newDate = formatDate(targetDate);
+
+    // Don't update if dropping on same date
+    if (draggedEvent.date === newDate) return;
+
+    onEventDateChange(eventId, newDate);
+  };
   const renderWeekView = () => {
     const weekDates = getWeekDates(currentDate);
     return (
@@ -101,8 +209,9 @@ export function Calendar({
             <TableBody>
               <TableRow>
                 {weekDates.map((date) => (
-                  <TableCell
+                  <DroppableCell
                     key={date.toISOString()}
+                    date={date}
                     sx={{
                       height: '120px',
                       verticalAlign: 'top',
@@ -124,38 +233,15 @@ export function Calendar({
                         const isRepeating = event.repeat.type !== 'none';
 
                         return (
-                          <Box
+                          <DraggableEvent
                             key={event.id}
-                            sx={{
-                              ...eventBoxStyles.common,
-                              ...(isNotified ? eventBoxStyles.notified : eventBoxStyles.normal),
-                            }}
-                          >
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              {isNotified && <Notifications fontSize="small" />}
-                              {isRepeating && (
-                                <Tooltip
-                                  title={`${event.repeat.interval}${getRepeatTypeLabel(
-                                    event.repeat.type
-                                  )}마다 반복${
-                                    event.repeat.endDate ? ` (종료: ${event.repeat.endDate})` : ''
-                                  }`}
-                                >
-                                  <Repeat fontSize="small" />
-                                </Tooltip>
-                              )}
-                              <Typography
-                                variant="caption"
-                                noWrap
-                                sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}
-                              >
-                                {event.title}
-                              </Typography>
-                            </Stack>
-                          </Box>
+                            event={event}
+                            isNotified={isNotified}
+                            isRepeating={isRepeating}
+                          />
                         );
                       })}
-                  </TableCell>
+                  </DroppableCell>
                 ))}
               </TableRow>
             </TableBody>
@@ -189,9 +275,32 @@ export function Calendar({
                     const dateString = day ? formatDate(currentDate, day) : '';
                     const holiday = holidays[dateString];
 
+                    // Create a proper date object for droppable
+                    const cellDate = day
+                      ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+                      : null;
+
+                    if (!cellDate) {
+                      return (
+                        <TableCell
+                          key={dayIndex}
+                          sx={{
+                            height: '120px',
+                            verticalAlign: 'top',
+                            width: '14.28%',
+                            padding: 1,
+                            border: '1px solid #e0e0e0',
+                            overflow: 'hidden',
+                            position: 'relative',
+                          }}
+                        />
+                      );
+                    }
+
                     return (
-                      <TableCell
+                      <DroppableCell
                         key={dayIndex}
+                        date={cellDate}
                         sx={{
                           height: '120px',
                           verticalAlign: 'top',
@@ -202,64 +311,29 @@ export function Calendar({
                           position: 'relative',
                         }}
                       >
-                        {day && (
-                          <>
-                            <Typography variant="body2" fontWeight="bold">
-                              {day}
-                            </Typography>
-                            {holiday && (
-                              <Typography variant="body2" color="error">
-                                {holiday}
-                              </Typography>
-                            )}
-                            {getEventsForDay(filteredEvents, day).map((event) => {
-                              const isNotified = notifiedEvents.includes(event.id);
-                              const isRepeating = event.repeat.type !== 'none';
-
-                              return (
-                                <Box
-                                  key={event.id}
-                                  sx={{
-                                    p: 0.5,
-                                    my: 0.5,
-                                    backgroundColor: isNotified ? '#ffebee' : '#f5f5f5',
-                                    borderRadius: 1,
-                                    fontWeight: isNotified ? 'bold' : 'normal',
-                                    color: isNotified ? '#d32f2f' : 'inherit',
-                                    minHeight: '18px',
-                                    width: '100%',
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <Stack direction="row" spacing={1} alignItems="center">
-                                    {isNotified && <Notifications fontSize="small" />}
-                                    {isRepeating && (
-                                      <Tooltip
-                                        title={`${event.repeat.interval}${getRepeatTypeLabel(
-                                          event.repeat.type
-                                        )}마다 반복${
-                                          event.repeat.endDate
-                                            ? ` (종료: ${event.repeat.endDate})`
-                                            : ''
-                                        }`}
-                                      >
-                                        <Repeat fontSize="small" />
-                                      </Tooltip>
-                                    )}
-                                    <Typography
-                                      variant="caption"
-                                      noWrap
-                                      sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}
-                                    >
-                                      {event.title}
-                                    </Typography>
-                                  </Stack>
-                                </Box>
-                              );
-                            })}
-                          </>
+                        <Typography variant="body2" fontWeight="bold">
+                          {day}
+                        </Typography>
+                        {holiday && (
+                          <Typography variant="body2" color="error">
+                            {holiday}
+                          </Typography>
                         )}
-                      </TableCell>
+                        {day &&
+                          getEventsForDay(filteredEvents, day).map((event) => {
+                            const isNotified = notifiedEvents.includes(event.id);
+                            const isRepeating = event.repeat.type !== 'none';
+
+                            return (
+                              <DraggableEvent
+                                key={event.id}
+                                event={event}
+                                isNotified={isNotified}
+                                isRepeating={isRepeating}
+                              />
+                            );
+                          })}
+                      </DroppableCell>
                     );
                   })}
                 </TableRow>
@@ -272,33 +346,35 @@ export function Calendar({
   };
 
   return (
-    <Stack flex={1} spacing={5}>
-      <Typography variant="h4">일정 보기</Typography>
+    <DndContext onDragEnd={handleDragEnd}>
+      <Stack flex={1} spacing={5}>
+        <Typography variant="h4">일정 보기</Typography>
 
-      <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
-        <IconButton aria-label="Previous" onClick={() => navigate('prev')}>
-          <ChevronLeft />
-        </IconButton>
-        <Select
-          size="small"
-          aria-label="뷰 타입 선택"
-          value={view}
-          onChange={(e) => setView(e.target.value as 'week' | 'month')}
-        >
-          <MenuItem value="week" aria-label="week-option">
-            Week
-          </MenuItem>
-          <MenuItem value="month" aria-label="month-option">
-            Month
-          </MenuItem>
-        </Select>
-        <IconButton aria-label="Next" onClick={() => navigate('next')}>
-          <ChevronRight />
-        </IconButton>
+        <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
+          <IconButton aria-label="Previous" onClick={() => navigate('prev')}>
+            <ChevronLeft />
+          </IconButton>
+          <Select
+            size="small"
+            aria-label="뷰 타입 선택"
+            value={view}
+            onChange={(e) => setView(e.target.value as 'week' | 'month')}
+          >
+            <MenuItem value="week" aria-label="week-option">
+              Week
+            </MenuItem>
+            <MenuItem value="month" aria-label="month-option">
+              Month
+            </MenuItem>
+          </Select>
+          <IconButton aria-label="Next" onClick={() => navigate('next')}>
+            <ChevronRight />
+          </IconButton>
+        </Stack>
+
+        {view === 'week' && renderWeekView()}
+        {view === 'month' && renderMonthView()}
       </Stack>
-
-      {view === 'week' && renderWeekView()}
-      {view === 'month' && renderMonthView()}
-    </Stack>
+    </DndContext>
   );
 }

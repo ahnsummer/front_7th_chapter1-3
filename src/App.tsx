@@ -214,6 +214,24 @@ function App() {
     resetForm();
   };
 
+  const handleEventDateChange = async (eventId: string, newDate: string) => {
+    const event = events.find((e) => e.id === eventId);
+    if (!event) return;
+
+    const updatedEvent: Event = {
+      ...event,
+      date: newDate,
+    };
+
+    try {
+      await saveEvent(updatedEvent);
+      enqueueSnackbar('일정 날짜가 변경되었습니다', { variant: 'success' });
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('일정 날짜 변경 실패', { variant: 'error' });
+    }
+  };
+
   return (
     <Box sx={{ width: '100%', height: '100vh', margin: 'auto', p: 5 }}>
       <Stack direction="row" spacing={6} sx={{ height: '100%' }}>
@@ -257,6 +275,7 @@ function App() {
           navigate={navigate}
           filteredEvents={filteredEvents}
           notifiedEvents={notifiedEvents}
+          onEventDateChange={handleEventDateChange}
         />
 
         <EventList
