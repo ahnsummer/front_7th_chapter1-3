@@ -29,13 +29,14 @@ import {
 
 type CalendarProps = {
   view: 'week' | 'month';
-  setView: (_view: 'week' | 'month') => void;
+  setView: (view: 'week' | 'month') => void;
   currentDate: Date;
   holidays: Record<string, string>;
-  navigate: (_direction: 'prev' | 'next') => void;
+  navigate: (direction: 'prev' | 'next') => void;
   filteredEvents: Event[];
   notifiedEvents: string[];
-  onEventDateChange: (_eventId: string, _newDate: string) => void;
+  onEventDateChange: (eventId: string, newDate: string) => void;
+  onCellClick: (date: Date) => void;
 };
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -137,10 +138,12 @@ function DroppableCell({
   date,
   children,
   sx,
+  onCellClick,
 }: {
   date: Date;
   children: React.ReactNode;
   sx?: object;
+  onCellClick?: (date: Date) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: date.toISOString(),
@@ -152,9 +155,11 @@ function DroppableCell({
       ref={setNodeRef}
       sx={{
         ...sx,
-        backgroundColor: isOver ? '#e3f2fd' : 'transparent',
+        backgroundColor: isOver ? '#e3f2fd' : '#FFF',
         transition: 'background-color 0.2s',
+        cursor: onCellClick == null ? undefined : 'pointer',
       }}
+      onClick={() => onCellClick?.(date)}
     >
       {children}
     </TableCell>
@@ -170,6 +175,7 @@ export function Calendar({
   filteredEvents,
   notifiedEvents,
   onEventDateChange,
+  onCellClick,
 }: CalendarProps) {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -208,27 +214,31 @@ export function Calendar({
             </TableHead>
             <TableBody>
               <TableRow>
-                {weekDates.map((date) => (
-                  <DroppableCell
-                    key={date.toISOString()}
-                    date={date}
-                    sx={{
-                      height: '120px',
-                      verticalAlign: 'top',
-                      width: '14.28%',
-                      padding: 1,
-                      border: '1px solid #e0e0e0',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Typography variant="body2" fontWeight="bold">
-                      {date.getDate()}
-                    </Typography>
-                    {filteredEvents
-                      .filter(
-                        (event) => new Date(event.date).toDateString() === date.toDateString()
-                      )
-                      .map((event) => {
+                {weekDates
+                  .map((date) => ({
+                    date,
+                    events: filteredEvents.filter(
+                      (event) => new Date(event.date).toDateString() === date.toDateString()
+                    ),
+                  }))
+                  .map(({ date, events }) => (
+                    <DroppableCell
+                      key={date.toISOString()}
+                      date={date}
+                      sx={{
+                        height: '120px',
+                        verticalAlign: 'top',
+                        width: '14.28%',
+                        padding: 1,
+                        border: '1px solid #e0e0e0',
+                        overflow: 'hidden',
+                      }}
+                      onCellClick={events.length > 0 ? undefined : onCellClick}
+                    >
+                      <Typography variant="body2" fontWeight="bold">
+                        {date.getDate()}
+                      </Typography>
+                      {events.map((event) => {
                         const isNotified = notifiedEvents.includes(event.id);
                         const isRepeating = event.repeat.type !== 'none';
 
@@ -241,8 +251,8 @@ export function Calendar({
                           />
                         );
                       })}
-                  </DroppableCell>
-                ))}
+                    </DroppableCell>
+                  ))}
               </TableRow>
             </TableBody>
           </Table>
@@ -310,6 +320,11 @@ export function Calendar({
                           overflow: 'hidden',
                           position: 'relative',
                         }}
+                        onCellClick={
+                          day && getEventsForDay(filteredEvents, day).length > 0
+                            ? undefined
+                            : onCellClick
+                        }
                       >
                         <Typography variant="body2" fontWeight="bold">
                           {day}

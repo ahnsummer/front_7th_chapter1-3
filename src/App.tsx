@@ -29,6 +29,7 @@ import { useSearch } from './hooks/useSearch.ts';
 import { Event, EventForm as EventFormType } from './types.ts';
 import { findOverlappingEvents } from './utils/eventOverlap.ts';
 import { getTimeErrorMessage } from './utils/timeValidation.ts';
+import { formatDate } from './utils/dateUtils.ts';
 
 function App() {
   const {
@@ -232,6 +233,12 @@ function App() {
     }
   };
 
+  const handleCellClick = (selectedDate: Date) => {
+    if (date !== '') return;
+
+    setDate(formatDate(selectedDate));
+  };
+
   return (
     <Box sx={{ width: '100%', height: '100vh', margin: 'auto', p: 5 }}>
       <Stack direction="row" spacing={6} sx={{ height: '100%' }}>
@@ -276,6 +283,7 @@ function App() {
           filteredEvents={filteredEvents}
           notifiedEvents={notifiedEvents}
           onEventDateChange={handleEventDateChange}
+          onCellClick={handleCellClick}
         />
 
         <EventList

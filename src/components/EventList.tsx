@@ -14,11 +14,11 @@ import { Event, RepeatType } from '../types';
 
 type EventListProps = {
   searchTerm: string;
-  setSearchTerm: (_term: string) => void;
+  setSearchTerm: (term: string) => void;
   filteredEvents: Event[];
   notifiedEvents: string[];
-  onEditEvent: (_event: Event) => void;
-  onDeleteEvent: (_event: Event) => void;
+  onEditEvent: (event: Event) => void;
+  onDeleteEvent: (event: Event) => void;
 };
 
 const notificationOptions = [
