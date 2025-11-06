@@ -1,5 +1,5 @@
 import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight, Notifications, Repeat } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import {
   Box,
   IconButton,
@@ -12,12 +12,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import React from 'react';
 
-import { Event, RepeatType } from '../types';
+import { Event } from '../types';
+import { EventItem } from './EventItem';
 import {
   formatDate,
   formatMonth,
@@ -41,52 +41,8 @@ type CalendarProps = {
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
-const eventBoxStyles = {
-  notified: {
-    backgroundColor: '#ffebee',
-    fontWeight: 'bold',
-    color: '#d32f2f',
-  },
-  normal: {
-    backgroundColor: '#f5f5f5',
-    fontWeight: 'normal',
-    color: 'inherit',
-  },
-  common: {
-    p: 0.5,
-    my: 0.5,
-    borderRadius: 1,
-    minHeight: '18px',
-    width: '100%',
-    overflow: 'hidden',
-  },
-};
-
-const getRepeatTypeLabel = (type: RepeatType): string => {
-  switch (type) {
-    case 'daily':
-      return '일';
-    case 'weekly':
-      return '주';
-    case 'monthly':
-      return '월';
-    case 'yearly':
-      return '년';
-    default:
-      return '';
-  }
-};
-
-// Draggable Event Component
-function DraggableEvent({
-  event,
-  isNotified,
-  isRepeating,
-}: {
-  event: Event;
-  isNotified: boolean;
-  isRepeating: boolean;
-}) {
+// Draggable Event Component - EventItem을 드래그 가능하게 감싸는 래퍼
+function DraggableEvent({ event, isNotified }: { event: Event; isNotified: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: event.id,
     data: { event },
@@ -95,40 +51,12 @@ function DraggableEvent({
   const style = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        opacity: isDragging ? 0.5 : 1,
-        cursor: 'grab',
       }
-    : { cursor: 'grab' };
+    : {};
 
   return (
-    <Box
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      sx={{
-        ...eventBoxStyles.common,
-        ...(isNotified ? eventBoxStyles.notified : eventBoxStyles.normal),
-        ...style,
-        '&:hover': {
-          opacity: 0.8,
-        },
-      }}
-    >
-      <Stack direction="row" spacing={1} alignItems="center">
-        {isNotified && <Notifications fontSize="small" />}
-        {isRepeating && (
-          <Tooltip
-            title={`${event.repeat.interval}${getRepeatTypeLabel(event.repeat.type)}마다 반복${
-              event.repeat.endDate ? ` (종료: ${event.repeat.endDate})` : ''
-            }`}
-          >
-            <Repeat fontSize="small" />
-          </Tooltip>
-        )}
-        <Typography variant="caption" noWrap sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>
-          {event.title}
-        </Typography>
-      </Stack>
+    <Box ref={setNodeRef} {...listeners} {...attributes} sx={style}>
+      <EventItem event={event} isNotified={isNotified} isDragging={isDragging} />
     </Box>
   );
 }
@@ -240,15 +168,9 @@ export function Calendar({
                       </Typography>
                       {events.map((event) => {
                         const isNotified = notifiedEvents.includes(event.id);
-                        const isRepeating = event.repeat.type !== 'none';
 
                         return (
-                          <DraggableEvent
-                            key={event.id}
-                            event={event}
-                            isNotified={isNotified}
-                            isRepeating={isRepeating}
-                          />
+                          <DraggableEvent key={event.id} event={event} isNotified={isNotified} />
                         );
                       })}
                     </DroppableCell>
@@ -337,14 +259,12 @@ export function Calendar({
                         {day &&
                           getEventsForDay(filteredEvents, day).map((event) => {
                             const isNotified = notifiedEvents.includes(event.id);
-                            const isRepeating = event.repeat.type !== 'none';
 
                             return (
                               <DraggableEvent
                                 key={event.id}
                                 event={event}
                                 isNotified={isNotified}
-                                isRepeating={isRepeating}
                               />
                             );
                           })}
