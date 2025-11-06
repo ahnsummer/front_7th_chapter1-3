@@ -12,3 +12,6 @@ node_modules
 # Playwright
 /blob-report/
 /playwright/.auth/
+
+*storybook.log
+storybook-static
