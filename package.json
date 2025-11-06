@@ -17,7 +17,9 @@
     "lint": "pnpm lint:eslint && pnpm lint:tsc",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "chromatic": "npx chromatic --project-token=chpt_e03b790fa51825d"
+    "chromatic": "npx chromatic --project-token=chpt_e03b790fa51825d",
+    "prepare": "husky",
+    "lint-staged": "lint-staged"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
