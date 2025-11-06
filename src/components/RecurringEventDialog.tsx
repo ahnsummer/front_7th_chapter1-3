@@ -40,7 +40,7 @@ const BUTTON_TEXT = {
 /**
  * Props for the RecurringEventDialog component
  */
-interface RecurringEventDialogProps {
+export interface RecurringEventDialogProps {
   /** Whether the dialog is open */
   open: boolean;
   /** Callback fired when the dialog should be closed */
@@ -54,8 +54,8 @@ interface RecurringEventDialogProps {
 }
 
 /**
- * Dialog component for handling recurring event operations
- * Allows users to choose between single instance or series-wide operations
+ * 반복 일정 작업을 처리하는 다이얼로그 컴포넌트
+ * - 사용자가 단일 일정 또는 전체 반복 일정에 대한 작업을 선택할 수 있습니다
  */
 const RecurringEventDialog = ({
   open,
