@@ -156,8 +156,6 @@ app.put('/api/recurring-events/:repeatId', async (req, res) => {
         ...event,
         title: updateData.title || event.title,
         description: updateData.description || event.description,
-        startTime: updateData.startTime || event.startTime,
-        endTime: updateData.endTime || event.endTime,
         location: updateData.location || event.location,
         category: updateData.category || event.category,
         notificationTime: updateData.notificationTime || event.notificationTime,
