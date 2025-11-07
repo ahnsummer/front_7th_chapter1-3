@@ -8,7 +8,7 @@ import {
 } from '../../__mocks__/handlersUtils.ts';
 import { useEventOperations } from '../../hooks/useEventOperations.ts';
 import { server } from '../../setupTests.ts';
-import { Event } from '../../types.ts';
+import { Event, EventForm } from '../../types.ts';
 
 const enqueueSnackbarFn = vi.fn();
 
@@ -50,8 +50,7 @@ it('정의된 이벤트 정보를 기준으로 적절하게 저장이 된다', a
 
   await act(() => Promise.resolve(null));
 
-  const newEvent: Event = {
-    id: '1',
+  const newEvent: EventForm = {
     title: '새 회의',
     date: '2025-10-16',
     startTime: '11:00',
