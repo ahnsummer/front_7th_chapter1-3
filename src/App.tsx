@@ -234,8 +234,6 @@ function App() {
   };
 
   const handleCellClick = (selectedDate: Date) => {
-    if (date !== '') return;
-
     setDate(formatDate(selectedDate));
   };
 

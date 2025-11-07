@@ -498,3 +498,57 @@ it('월간 뷰 선택 후 해당 주에 반복 일정이 존재한다면 해당 
   const eventList = within(screen.getByTestId('event-list'));
   expect(eventList.getAllByText('새 회의')).toHaveLength(2);
 });
+
+describe('캘린더 클릭을 통한 폼 날짜 입력', () => {
+  it('이벤트가 없는 일자를 클릭하면 일정 추가 폼에 해당 일자가 입력된다', async () => {
+    setupMockHandlerListCreation();
+
+    const { user } = setup(<App />);
+
+    await user.click(screen.getByText('1'));
+
+    expect(screen.getByLabelText('날짜')).toHaveValue('2025-10-01');
+  });
+
+  it('이미 이벤트가 있는 날짜를 클릭하면 폼에 날짜가 업데이트되지 않는다', async () => {
+    setupMockHandlerCreation([
+      {
+        id: '1',
+        title: '기존 회의',
+        date: '2025-10-15',
+        startTime: '09:00',
+        endTime: '10:00',
+        description: '기존 팀 미팅',
+        location: '회의실 B',
+        category: '업무',
+        repeat: { type: 'none', interval: 0 },
+        notificationTime: 10,
+      },
+    ]);
+
+    const { user } = setup(<App />);
+
+    await screen.findByText('일정 로딩 완료!');
+
+    // 기존 일정이 있는 10월 15일 클릭
+    await user.click(screen.getByText('15'));
+
+    // 날짜 필드가 업데이트되지 않아야 함 (빈 값 유지)
+    expect(screen.getByLabelText('날짜')).toHaveValue('');
+  });
+
+  it('이미 폼이 작성되어 있는 상황에서는 날짜 클릭을 통해 폼이 업데이트되지 않는다', async () => {
+    setupMockHandlerListCreation();
+
+    const { user } = setup(<App />);
+
+    await user.type(screen.getByLabelText('제목'), '테스트 일정');
+    await user.type(screen.getByLabelText('날짜'), '2025-10-20');
+
+    // 다른 날짜(1일) 클릭
+    await user.click(screen.getByText('1'));
+
+    // 날짜가 변경되지 않고 기존 값 유지
+    expect(screen.getByLabelText('날짜')).toHaveValue('2025-10-01');
+  });
+});
