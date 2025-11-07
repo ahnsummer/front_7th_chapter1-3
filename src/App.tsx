@@ -174,9 +174,12 @@ function App() {
     const overlapping = findOverlappingEvents(eventData, events);
     const hasOverlapEvent = overlapping.length > 0;
 
+    console.log(editingEvent);
+    console.log(eventData);
+
     // 수정
     if (editingEvent) {
-      if (hasOverlapEvent) {
+      if (editingEvent.repeat.type === 'none' && hasOverlapEvent) {
         setOverlappingEvents(overlapping);
         setIsOverlapDialogOpen(true);
         return;
@@ -187,6 +190,7 @@ function App() {
         editingEvent.repeat.interval > 0 &&
         recurringEditMode !== null
       ) {
+        console.log('handleRecurringEdit');
         await handleRecurringEdit(eventData as Event, recurringEditMode);
         setRecurringEditMode(null);
       } else {
@@ -357,6 +361,7 @@ function App() {
                 <IconButton
                   size="small"
                   onClick={() => setNotifications((prev) => prev.filter((_, i) => i !== index))}
+                  aria-label="Close notification"
                 >
                   <Close />
                 </IconButton>
