@@ -191,8 +191,10 @@ export function EventForm({
       {!editingEvent && (
         <FormControl>
           <FormControlLabel
+            htmlFor="is-repeating"
             control={
               <Checkbox
+                id="is-repeating"
                 checked={isRepeating}
                 onChange={(e) => {
                   const checked = e.target.checked;
@@ -213,8 +215,9 @@ export function EventForm({
       {isRepeating && !editingEvent && (
         <Stack spacing={2}>
           <FormControl fullWidth>
-            <FormLabel>반복 유형</FormLabel>
+            <FormLabel htmlFor="repeat-type">반복 유형</FormLabel>
             <Select
+              id="repeat-type"
               size="small"
               value={repeatType}
               aria-label="반복 유형"
@@ -271,7 +274,11 @@ export function EventForm({
           onChange={(e) => setNotificationTime(Number(e.target.value))}
         >
           {notificationOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
+            <MenuItem
+              key={option.value}
+              value={option.value}
+              aria-label={`${option.value} minutes`}
+            >
               {option.label}
             </MenuItem>
           ))}
