@@ -23,7 +23,7 @@
     "lint": "pnpm lint:eslint && pnpm lint:tsc",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "chromatic": "chromatic --project-token ${CHROMATIC_PROJECT_TOKEN}",
+    "chromatic": "chromatic --project-token chpt_e03b790fa51825d",
     "prepare": "husky",
     "lint-staged": "lint-staged"
   },
