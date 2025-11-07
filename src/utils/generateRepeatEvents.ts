@@ -4,7 +4,7 @@ import { formatDate } from './dateUtils';
 // ! TEST CASE
 export const generateRepeatEvents = (eventData: EventForm): EventForm[] => {
   const events: EventForm[] = [];
-  const maxEndDate = new Date('2025-12-30');
+  const maxEndDate = new Date('2025-12-31');
   const startDate = new Date(eventData.date);
   const endDate = eventData.repeat.endDate ? new Date(eventData.repeat.endDate) : maxEndDate;
 

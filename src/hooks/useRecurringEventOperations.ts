@@ -125,13 +125,15 @@ export const useRecurringEventOperations = (
     const repeatId = originalEvent.repeat.id;
 
     if (repeatId) {
-      const updateData = {
-        title: updatedEvent.title,
-        description: updatedEvent.description,
-        location: updatedEvent.location,
-        category: updatedEvent.category,
-        notificationTime: updatedEvent.notificationTime,
-      };
+      // const updateData = {
+      //   title: updatedEvent.title,
+      //   description: updatedEvent.description,
+      //   location: updatedEvent.location,
+      //   category: updatedEvent.category,
+      //   notificationTime: updatedEvent.notificationTime,
+      // };
+
+      const updateData = updatedEvent;
       return await updateRecurringEventOnServer(repeatId, updateData);
     } else {
       const results = await Promise.all(
@@ -159,6 +161,8 @@ export const useRecurringEventOperations = (
     }
 
     const relatedEvents = findRelatedRecurringEvents(originalEvent);
+
+    console.log(relatedEvents);
 
     if (relatedEvents.length === 0 || editSingleOnly) {
       const singleEvent = createSingleEditEvent(updatedEvent);
