@@ -5,6 +5,10 @@ echo "Running lint-staged..."
 pnpm run lint-staged
 echo "Successfully ran lint-staged"
 
+echo "Running chromatic..."
+pnpm run chromatic
+echo "Successfully ran chromatic"
+
 echo "Running tests..."
 pnpm test
 echo "All tests passed successfully"
